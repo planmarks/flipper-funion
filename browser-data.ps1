@@ -1,19 +1,3 @@
-# Install the SQLite PowerShell module if not already installed
-if (-not(Get-Module -ListAvailable -Name PSSQLite)) {
-    Install-PackageProvider -Name NuGet -Force
-    Install-Module -Name PSSQLite -Force
-}
-
-Import-Module PSSQLite
-
-# Install the SQLite PowerShell module if not already installed
-if (-not(Get-Module -ListAvailable -Name PSSQLite)) {
-    Install-PackageProvider -Name NuGet -Force
-    Install-Module -Name PSSQLite -Force
-}
-
-Import-Module PSSQLite
-
 function Get-BrowserData {
 
     [CmdletBinding()]
